@@ -1,10 +1,18 @@
+using Microsoft.EntityFrameworkCore;
 using SistemaTickets.Components;
+using SistemaTickets.DAL;
+using SistemaTickets.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+var ConStr = builder.Configuration.GetConnectionString("ConStr");
+builder.Services.AddDbContext<Contexto>(options => options.UseSqlite(ConStr));
+builder.Services.AddScoped<PrioridadesService>();
+
 
 var app = builder.Build();
 

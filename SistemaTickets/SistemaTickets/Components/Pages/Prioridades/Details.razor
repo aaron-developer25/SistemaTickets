@@ -1,0 +1,115 @@
+﻿@page "/detailsprioridades/{PrioridadID:int}";
+
+@inject PrioridadesService prioridadesservice;
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<div class="card shadow-lg border-0 rounded" style="background-color: #f8f9fa;">
+    <div class="card-header bg-primary text-white text-center py-2 rounded">
+        <h3 style="font-weight: bold;" class="mb-0 font-weight-bold">Detalles de Prioridades</h3>
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <label style="font-weight: bold;" class="form-label ">ID:</label>
+                <span>@prioridades.PrioridadId</span>
+            </div>
+
+            <div class="col-md-4 mb-2">
+                <label style="font-weight: bold;" class="form-label">Descripci&oacute;n:</label>
+                <span>@prioridades.Descripcion</span>
+            </div>
+
+            <div class="col-md-4 mb-2">
+                <label style="font-weight: bold;" class="form-label">D&iacute;as Compromiso:</label>
+                <span>@prioridades.DiasCompromiso</span>
+            </div>
+        </div>
+
+        <div class="card-footer bg-light d-flex justify-content-end">
+            <div class="btn-group">
+                <a type="button" href="/indexprioridades/" class="btn btn-outline-danger"><span class="fas fa-arrow-left"></span> Retroceder </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div class="exito-contenedor-invalido" style="@fracasoContenedorEstilo">
+        <div id="fracaso-mensaje" class="mensaje-contenedor">@mensajeFracaso</div>
+    </div>
+    <div class="exito-contenedor-valido" style="@exitoContenedorEstilo">
+        <div id="exito-mensaje" class="mensaje-contenedor">@mensajeExito</div>
+    </div>
+
+@code {
+
+    public Prioridades prioridades = new Prioridades();
+
+    private string mensajeExito = "";
+    private string mensajeFracaso = "";
+    private string exitoContenedorEstilo = "display: none;";
+    private string fracasoContenedorEstilo = "display: none;";
+
+
+    [Parameter]
+        public int PrioridadID { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+            if (PrioridadID > 0)
+        {
+                prioridades.PrioridadId = PrioridadID;
+            await Buscar();
+        }
+    }
+
+    public async Task Buscar()
+    {
+            var existe = await prioridadesservice.Buscar(prioridades.PrioridadId);
+        if (existe != null)
+        {
+                prioridades = existe;
+        }
+        else
+        {
+            await MostrarMensaje("Prioridad no encontrada", "Invalido", "prioridadNoEncontrada.mp3");
+        }
+    }
+
+
+    public async Task MostrarMensaje(string mensaje, string tipoMensaje, string audio)
+    {
+        if (tipoMensaje == "Valido")
+        {
+            mensajeExito = mensaje;
+            exitoContenedorEstilo = "display: block;";
+            fracasoContenedorEstilo = "display: none;";
+
+            await ReproducirAudio(audio);
+
+            await Task.Delay(4500);
+            exitoContenedorEstilo = "display: none;";
+            StateHasChanged();
+        }
+        else if (tipoMensaje == "Invalido")
+        {
+            mensajeFracaso = mensaje;
+            fracasoContenedorEstilo = "display: block;";
+            exitoContenedorEstilo = "display: none;";
+
+            await ReproducirAudio(audio);
+
+            await Task.Delay(4500);
+            fracasoContenedorEstilo = "display: none;";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReproducirAudio(string audio)
+    {
+        await JSRuntime.InvokeVoidAsync("playAudio", "recursos/audios/" + audio);
+    }
+}

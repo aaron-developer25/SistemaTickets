@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="fontawesome/css/all.css" />
+    <link rel="stylesheet" href="./estilo/consultas.css" />
+    <link rel="stylesheet" href="./estilo/inicio.css" />
+    <link rel="stylesheet" href="./estilo/mensaje.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="SistemaTickets.styles.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
@@ -15,6 +20,13 @@
 <body>
     <Routes />
     <script src="_framework/blazor.web.js"></script>
+
+    <script>
+        function playAudio(audioPath) {
+            var audio = new Audio(audioPath);
+            audio.play();
+        }
+    </script>
 </body>
 
 </html>

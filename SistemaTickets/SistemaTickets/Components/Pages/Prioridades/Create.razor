@@ -1,0 +1,107 @@
+﻿@page "/createprioridades";
+
+@inject PrioridadesService prioridadesservice;
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<EditForm Model="prioridades" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="card shadow-lg border-0 rounded" style="background-color: #f8f9fa;">
+
+        <div class="card-header bg-primary text-white text-center py-2 rounded">
+            <h3 style="font-weight: bold;" class="mb-0 font-weight-bold">Registrar Prioridades</h3>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+                    <label for="Descripci&oacute;n" class="form-label">Descripci&oacute;n:</label>
+                    <InputText @bind-Value="prioridades.Descripcion" class="form-control" placeholder="Ingrese su Descripci&oacute;n" />
+                    <ValidationMessage For="@(() => prioridades.Descripcion)" />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="DiasCompromiso" class="form-label">D&iacute;as Compromiso:</label>
+                    <InputNumber @bind-Value="prioridades.DiasCompromiso" class="form-control" placeholder="Ingrese los D&iacute;as Compromiso" />
+                    <ValidationMessage For="@(() => prioridades.DiasCompromiso)" />
+                </div>
+
+            </div>
+        </div>
+
+        <div class="card-footer bg-light d-flex justify-content-end">
+            <div class="btn-group">
+                <a type="button" href="/indexprioridades/" class="btn btn-outline-danger"><span class="fas fa-arrow-left"></span> Retroceder </a>
+                <button type="submit" class="btn btn-outline-success"><span class="fas fa-save"></span> Guardar </button>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+    <div class="exito-contenedor-invalido" style="@fracasoContenedorEstilo">
+        <div id="fracaso-mensaje" class="mensaje-contenedor">@mensajeFracaso</div>
+    </div>
+    <div class="exito-contenedor-valido" style="@exitoContenedorEstilo">
+        <div id="exito-mensaje" class="mensaje-contenedor">@mensajeExito</div>
+    </div>
+
+@code {
+
+    public Prioridades prioridades = new Prioridades();
+
+    private string mensajeExito = "";
+    private string mensajeFracaso = "";
+    private string exitoContenedorEstilo = "display: none;";
+    private string fracasoContenedorEstilo = "display: none;";
+
+
+    public async Task Guardar()
+    {
+        var guardo = await prioridadesservice.Guardar(this.prioridades);
+        if (guardo)
+        {
+            await MostrarMensaje("Guardado Existoso.", "Valido", "guardadoExito.mp3");
+            NavigationManager.NavigateTo("/indexprioridades");
+        }
+        else
+        {
+            await MostrarMensaje("Esta descripcion ya existe...", "Invalido", "descripcionExiste.mp3");
+        }
+    }
+
+    public async Task MostrarMensaje(string mensaje, string tipoMensaje, string audio)
+    {
+        if (tipoMensaje == "Valido")
+        {
+            mensajeExito = mensaje;
+            exitoContenedorEstilo = "display: block;";
+            fracasoContenedorEstilo = "display: none;";
+
+            await ReproducirAudio(audio);
+
+            await Task.Delay(4500);
+            exitoContenedorEstilo = "display: none;";
+            StateHasChanged();
+        }
+        else if (tipoMensaje == "Invalido")
+        {
+            mensajeFracaso = mensaje;
+            fracasoContenedorEstilo = "display: block;";
+            exitoContenedorEstilo = "display: none;";
+
+            await ReproducirAudio(audio);
+
+            await Task.Delay(4500);
+            fracasoContenedorEstilo = "display: none;";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReproducirAudio(string audio)
+    {
+        await JSRuntime.InvokeVoidAsync("playAudio", "recursos/audios/" + audio);
+    }
+}
