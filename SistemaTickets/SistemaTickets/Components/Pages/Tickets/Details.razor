@@ -1,0 +1,148 @@
+﻿@page "/detailsticket/{TicketID:int}";
+
+@inject TicketsService ticketsservice;
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+    <div class="card shadow-lg border-0 rounded" style="background-color: #f8f9fa;">
+        <div class="card-header bg-primary text-white text-center py-2 rounded">
+            <h3 style="font-weight: bold;" class="mb-0 font-weight-bold">Detalles Tickets</h3>
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <label style="font-weight: bold;" class="form-label ">Ticket ID:</label>
+                <span>@tickets.TicketId</span>
+                </div>
+
+                <div class="col-md-4 mb-2">
+                    <label style="font-weight: bold;" class="form-label">Fecha:</label>
+                <span>@tickets.Fecha</span>
+                </div>
+ 
+                <div class="col-md-4 mb-2">
+                    <label style="font-weight: bold;" class="form-label">Cliente ID:</label>
+                <span>@tickets.ClienteId</span>
+                </div>
+            </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <label style="font-weight: bold;" class="form-label ">Sistema ID:</label>
+                <span>@tickets.SistemaId</span>
+            </div>
+
+            <div class="col-md-4 mb-2">
+                <label style="font-weight: bold;" class="form-label">Priorirdad ID:</label>
+                <span>@tickets.PrioridadId</span>
+            </div>
+
+            <div class="col-md-4 mb-2">
+                <label style="font-weight: bold;" class="form-label">Solicutado por:</label>
+                <span>@tickets.Solicitadopor</span>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <label style="font-weight: bold;" class="form-label ">Asunto:</label>
+                <span>@tickets.Asunto</span>
+            </div>
+
+            <div class="col-md-4 mb-2">
+                <label style="font-weight: bold;" class="form-label">Descripci&oacute;n:</label>
+                <span>@tickets.Descripcion</span>
+            </div>
+        </div>
+
+            <div class="card-footer bg-light d-flex justify-content-end">
+                <div class="btn-group">
+                <a type="button" href="/indextickets/" class="btn btn-outline-danger"><span class="fas fa-arrow-left"></span> Retroceder </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="exito-contenedor-invalido" style="@fracasoContenedorEstilo">
+        <div id="fracaso-mensaje" class="mensaje-contenedor">@mensajeFracaso</div>
+    </div>
+    <div class="exito-contenedor-valido" style="@exitoContenedorEstilo">
+        <div id="exito-mensaje" class="mensaje-contenedor">@mensajeExito</div>
+    </div>
+
+
+
+@code {
+
+    public Tickets tickets = new Tickets();
+
+    private string mensajeExito = "";
+    private string mensajeFracaso = "";
+    private string exitoContenedorEstilo = "display: none;";
+    private string fracasoContenedorEstilo = "display: none;";
+
+
+    [Parameter]
+    public int TicketID { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (TicketID > 0)
+        {
+            tickets.TicketId = TicketID;
+            await Buscar();
+        }
+    }
+
+    public async Task Buscar()
+    {
+        var existe = await ticketsservice.Buscar(tickets.TicketId);
+        if (existe != null)
+        {
+            tickets = existe;
+        }
+        else
+        {
+            await MostrarMensaje("Ticket no encontrado", "Invalido", "ticketnoencontrado.mp3");
+        }
+    }
+
+
+    public async Task MostrarMensaje(string mensaje, string tipoMensaje, string audio)
+    {
+        if (tipoMensaje == "Valido")
+        {
+            mensajeExito = mensaje;
+            exitoContenedorEstilo = "display: block;";
+            fracasoContenedorEstilo = "display: none;";
+
+            await ReproducirAudio(audio);
+
+            await Task.Delay(4500);
+            exitoContenedorEstilo = "display: none;";
+            StateHasChanged();
+        }
+        else if (tipoMensaje == "Invalido")
+        {
+            mensajeFracaso = mensaje;
+            fracasoContenedorEstilo = "display: block;";
+            exitoContenedorEstilo = "display: none;";
+
+            await ReproducirAudio(audio);
+
+            await Task.Delay(4500);
+            fracasoContenedorEstilo = "display: none;";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReproducirAudio(string audio)
+    {
+        await JSRuntime.InvokeVoidAsync("playAudio", "recursos/audios/" + audio);
+    }
+}

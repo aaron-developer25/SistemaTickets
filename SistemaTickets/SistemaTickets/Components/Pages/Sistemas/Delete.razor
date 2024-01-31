@@ -1,0 +1,131 @@
+﻿@page "/deletessistema/{SistemaID:int}";
+
+@inject SistemasService sistemasservice;
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<div class="card shadow-lg border-0 rounded" style="background-color: #f8f9fa;">
+    <div class="card-header bg-primary text-white text-center py-2 rounded">
+        <h3 style="font-weight: bold;" class="mb-0 font-weight-bold">Eliminar Sistemas</h3>
+    </div>
+
+    <div class="card-body text-center">
+        <div class="col-md-6 mb-3 mx-auto">
+            <label style="font-weight: bold;" class="form-label font-weight-bold">ID:</label>
+            <span>@sistemas.SistemaId</span>
+        </div>
+
+        <div class="col-md-6 mb-3 mx-auto">
+            <label style="font-weight: bold;" class="form-label font-weight-bold">Nombre:</label>
+            <span>@sistemas.Nombre</span>
+        </div>
+
+        <div class="col-md-12 mb-3 mx-auto">
+            <p style="font-weight: bold;">¿Seguro que deseas eliminar este sistema?</p> 
+        </div>
+
+    </div>
+
+    <div class="card-footer bg-light d-flex justify-content-center">
+        <div class="btn-group">
+            <button @onclick="Eliminar" type="button" class="btn btn-success btn-block"><span class="fas fa-check"></span> Sí</button>
+            <a href="/indexsistemas/" class="btn btn-danger btn-block"><span class="fas fa-times"></span> No</a>
+        </div>
+    </div>
+
+</div>
+
+
+
+    <div class="exito-contenedor-invalido" style="@fracasoContenedorEstilo">
+        <div id="fracaso-mensaje" class="mensaje-contenedor">@mensajeFracaso</div>
+    </div>
+    <div class="exito-contenedor-valido" style="@exitoContenedorEstilo">
+        <div id="exito-mensaje" class="mensaje-contenedor">@mensajeExito</div>
+    </div>
+
+
+
+@code {
+
+    public Sistemas sistemas = new Sistemas();
+
+    private string mensajeExito = "";
+    private string mensajeFracaso = "";
+    private string exitoContenedorEstilo = "display: none;";
+    private string fracasoContenedorEstilo = "display: none;";
+
+
+    [Parameter]
+    public int SistemaID { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (SistemaID > 0)
+        {
+            sistemas.SistemaId = SistemaID;
+            await Buscar();
+        }
+    }
+
+    public async Task Buscar()
+    {
+        var existe = await sistemasservice.Buscar(sistemas.SistemaId);
+        if (existe != null)
+        {
+            sistemas = existe;
+        }
+        else
+        {
+            await MostrarMensaje("Prioridad no encontrada", "Invalido", "prioridadNoEncontrada.mp3");
+        }
+    }
+
+    public async Task Eliminar()
+    {
+        var elimino = await sistemasservice.Eliminar(this.sistemas);
+        if (elimino)
+        {
+            await MostrarMensaje("Eliminado Existoso.", "Valido", "eliminadoExito.mp3");
+            NavigationManager.NavigateTo("/indexsistemas");
+        }
+        else
+        {
+            await MostrarMensaje("Error Inesperado.", "Invalido", "errorinesperado.mp3");
+        }
+    }
+
+    public async Task MostrarMensaje(string mensaje, string tipoMensaje, string audio)
+    {
+        if (tipoMensaje == "Valido")
+        {
+            mensajeExito = mensaje;
+            exitoContenedorEstilo = "display: block;";
+            fracasoContenedorEstilo = "display: none;";
+
+            await ReproducirAudio(audio);
+
+            await Task.Delay(4500);
+            exitoContenedorEstilo = "display: none;";
+            StateHasChanged();
+        }
+        else if (tipoMensaje == "Invalido")
+        {
+            mensajeFracaso = mensaje;
+            fracasoContenedorEstilo = "display: block;";
+            exitoContenedorEstilo = "display: none;";
+
+            await ReproducirAudio(audio);
+
+            await Task.Delay(4500);
+            fracasoContenedorEstilo = "display: none;";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReproducirAudio(string audio)
+    {
+        await JSRuntime.InvokeVoidAsync("playAudio", "recursos/audios/" + audio);
+    }
+}

@@ -1,0 +1,167 @@
+﻿@page "/createticket";
+
+@inject TicketsService ticketsservice;
+@inject PrioridadesService prioridadesservice;
+@inject ClientesService clientesservice;
+@inject SistemasService sistemasservice;
+
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<EditForm Model="tickets" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <div class="card shadow-lg border-0 rounded" style="background-color: #f8f9fa;">
+        <div class="card-header bg-primary text-white text-center py-2 rounded">
+            <h3 style="font-weight: bold;" class="mb-0 font-weight-bold">Registrar Tickets</h3>
+        </div>
+
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold bi bi-calendar-date"> Fecha</label>
+                    <InputDate @bind-Value="tickets.Fecha" class="form-control"></InputDate>
+                    <ValidationMessage For="@(() => tickets.Fecha)" />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold bi bi-key"> Cliente:</label>
+                    <InputSelect @bind-Value="tickets.ClienteId" class="form-select">
+                        @foreach (var cliente in ListaClientes)
+                        {
+                            <option value="@cliente.ClienteId">@cliente.Nombres</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => tickets.ClienteId)" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold bi bi-key"> Sistema:</label>
+                    <InputSelect @bind-Value="tickets.SistemaId" class="form-select">
+                        @foreach (var sistema in ListaSistemas)
+                        {
+                            <option value="@sistema.SistemaId">@sistema.Nombre</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => tickets.SistemaId)" />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="fw-bold bi bi-key"> Prioridad:</label>
+                    <InputSelect @bind-Value="tickets.PrioridadId" class="form-select">
+                        @foreach (var prioridad in ListaPrioridades)
+                        {
+                            <option value="@prioridad.PrioridadId">@prioridad.Descripcion</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="@(() => tickets.PrioridadId)" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="Solicitadopor" class="fw-bold bi bi-key">Solicitado por:</label>
+                    <InputText @bind-Value="tickets.Solicitadopor" class="form-control" placeholder="Ingrese quien solicita" />
+                    <ValidationMessage For="@(() => tickets.Solicitadopor)" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="Asunto" class="fw-bold bi bi-key">Asunto:</label>
+                    <InputText @bind-Value="tickets.Asunto" class="form-control" placeholder="Ingrese el asunto" />
+                    <ValidationMessage For="@(() => tickets.Asunto)" />
+                </div>
+            </div>
+
+            <div class="col-md-0">
+                <label for="Descripcion" class="fw-bold bi bi-key">Descripci&oacute;n:</label>
+                <InputTextArea @bind-Value="tickets.Descripcion" class="form-control" rows="4" placeholder="Ingrese su descripci&oacute;n"></InputTextArea>
+               <ValidationMessage For="@(() => tickets.Descripcion)" />
+            </div>
+        </div>
+
+        <div class="card-footer bg-light d-flex justify-content-end">
+            <div class="btn-group">
+                <a type="button" href="/indextickets/" class="btn btn-outline-danger"><span class="fas fa-arrow-left"></span> Retroceder </a>
+                <button type="submit" class="btn btn-outline-success"><span class="fas fa-save"></span> Guardar </button>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+    <div class="exito-contenedor-invalido" style="@fracasoContenedorEstilo">
+        <div id="fracaso-mensaje" class="mensaje-contenedor">@mensajeFracaso</div>
+    </div>
+    <div class="exito-contenedor-valido" style="@exitoContenedorEstilo">
+        <div id="exito-mensaje" class="mensaje-contenedor">@mensajeExito</div>
+    </div>
+
+@code {
+
+    public Tickets tickets = new Tickets();
+    public Clientes clientes = new Clientes();
+
+    private string mensajeExito = "";
+    private string mensajeFracaso = "";
+    private string exitoContenedorEstilo = "display: none;";
+    private string fracasoContenedorEstilo = "display: none;";
+
+
+    public List<Prioridades> ListaPrioridades = new List<Prioridades>();
+    public List<Clientes> ListaClientes = new List<Clientes>();
+    public List<Sistemas> ListaSistemas = new List<Sistemas>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        ListaClientes = await clientesservice.Listar(t => true);
+        ListaPrioridades = await prioridadesservice.Listar(t => true);
+        ListaSistemas = await sistemasservice.Listar(t => true);
+        tickets.Fecha = DateTime.Today;
+    }
+
+   
+    public async Task Guardar()
+    {
+        var guardo = await ticketsservice.Guardar(this.tickets);
+        if (guardo)
+        {
+            await MostrarMensaje("Guardado Existoso.", "Valido", "guardadoExito.mp3");
+            NavigationManager.NavigateTo("/indextickets");
+        }
+    }
+
+    public async Task MostrarMensaje(string mensaje, string tipoMensaje, string audio)
+    {
+        if (tipoMensaje == "Valido")
+        {
+            mensajeExito = mensaje;
+            exitoContenedorEstilo = "display: block;";
+            fracasoContenedorEstilo = "display: none;";
+
+            await ReproducirAudio(audio);
+
+            await Task.Delay(4500);
+            exitoContenedorEstilo = "display: none;";
+            StateHasChanged();
+        }
+        else if (tipoMensaje == "Invalido")
+        {
+            mensajeFracaso = mensaje;
+            fracasoContenedorEstilo = "display: block;";
+            exitoContenedorEstilo = "display: none;";
+
+            await ReproducirAudio(audio);
+
+            await Task.Delay(4500);
+            fracasoContenedorEstilo = "display: none;";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ReproducirAudio(string audio)
+    {
+        await JSRuntime.InvokeVoidAsync("playAudio", "recursos/audios/" + audio);
+    }
+}

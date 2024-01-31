@@ -10,6 +10,10 @@ namespace SistemaTickets.DAL
 
         public DbSet<Clientes>? Clientes { get; set; }
 
+        public DbSet<Tickets>? Tickets { get; set; }
+
+        public DbSet<Sistemas>? Sistemas { get; set; }
+
         public Contexto(DbContextOptions<Contexto> options) : base(options) { }
     }
 }
